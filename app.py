@@ -160,7 +160,7 @@ if ok:
         mape = np.mean(errors / denominator) * 100
         return mape
     
-    y_true = data[y]
+    y_true = data['inclinement']
     y_pred = data['all_predictions']
     
     # Calculate MAE, MAPE, and MSE
