@@ -154,9 +154,9 @@ if ok:
         # Handle cases where denominator is zero
         denominator[denominator == 0] = 0.01  # Convert zeros to a small number to avoid division by zero
 
-    # Calculate MAPE
-    mape = np.mean(errors / denominator) * 100
-    return mape
+        # Calculate MAPE
+        mape = np.mean(errors / denominator) * 100
+        return mape
 
     # Calculate MAE, MAPE, and MSE
     mae = mean_absolute_error(y_true, y_pred)
