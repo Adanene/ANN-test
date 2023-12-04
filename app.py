@@ -147,8 +147,6 @@ if ok:
     # Now, all_predictions_best_model and all_predictions_model contain the predictions for all data points in your dataset
     all_predictions = model.predict(X)
 
-    y_true = y
-    y_pred = all_predictions
 
     # Calculate MAPE
     def calculate_mape(y_true, y_pred):
@@ -161,7 +159,10 @@ if ok:
         # Calculate MAPE
         mape = np.mean(errors / denominator) * 100
         return mape
-
+    
+    y_true = data[y]
+    y_pred = data[all_predictions]
+    
     # Calculate MAE, MAPE, and MSE
     mae = mean_absolute_error(y_true, y_pred)
     mape = calculate_mape(y_true, y_pred)
