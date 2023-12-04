@@ -17,7 +17,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 # Define a dictionary to store the session state values
@@ -124,70 +124,48 @@ if ok:
     # Split the dataset into features (X) and target variable (y)
     X = data[features]
     y = data[target]
+    # Split the dataset into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    # Define the parameter grid
-    param_grid = {
-        'n_estimators': [1547],
-        'max_depth': [10],
-        'learning_rate': [1.25],
-        'subsample': [1.0],
-        'colsample_bytree': [1.0],
-        'reg_alpha': [1],
-        'reg_lambda': [1],
-        'reg_gamma': [1],
-    }
+    # Standardize your data (important for neural networks)
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
 
-    # Create the XGBoost regressor
-    xgboost_model = xgb.XGBRegressor(random_state=300, objective="reg:squarederror")
+    model = Sequential()
+    model.add(Dense(64, input_dim=len(features), activation='relu'))
+    model.add(Dense(32, activation='relu'))
+    model.add(Dense(1, activation='linear'))  # Output layer for regression
 
-    # Create the GridSearchCV object
-    grid_search = GridSearchCV(estimator=xgboost_model, param_grid=param_grid,
-                           cv=3, n_jobs=-1, verbose=2, scoring='neg_mean_squared_error', error_score='raise')
-
-    # Fit the GridSearchCV to the training data
-    grid_search.fit(X, y, eval_metric='rmse', eval_set=[(X, y)], early_stopping_rounds=600)
-
-    # Get the best model from GridSearchCV
-    best_model = grid_search.best_estimator_
-
-    # Create another XGBoost regressor (model) with fixed parameters
-    model = xgb.XGBRegressor(n_estimators=300, max_depth=11, learning_rate=1.0, random_state=300)
-
-    # Fit the model to the training data
-    model.fit(X, y)
-
-    # Make predictions on all data points using the best model
-    all_predictions_best_model = best_model.predict(X)
-
-    # Make predictions on all data points using the model
-    all_predictions_model = model.predict(X)
+    # Compile the model
+    model.compile(optimizer='adam', loss='mean_squared_error')
+    model.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_test, y_test))
     # Now, all_predictions_best_model and all_predictions_model contain the predictions for all data points in your dataset
+    all_predictions = model.predict(X)
 
-    # Apply the threshold to predicted values
-    threshold = 0.001  # You can adjust this value based on your domain knowledge
-    all_predictions_best_model[all_predictions_best_model < threshold] = 0.01
-    all_predictions_model[all_predictions_model < threshold] = 0.01
+    y_true = y
+    y_pred = all_predictions
 
-    # MAPE Prediction for best_model
-    mape_best_model = calculate_mape(y, all_predictions_best_model)
+    # Calculate MAPE
+    def calculate_mape(y_true, y_pred):
+        errors = np.abs(y_true - y_pred)
+        denominator = np.abs(y_true)
 
-    # MAPE Prediction for model
-    mape_model = calculate_mape(y, all_predictions_model)
+        # Handle cases where denominator is zero
+        denominator[denominator == 0] = 0.01  # Convert zeros to a small number to avoid division by zero
 
-    # Evaluate the model performance for best_model
-    mse_best_model = mean_squared_error(y, all_predictions_best_model)
-    print('Mean squared error for best_model:', mse_best_model)
+    # Calculate MAPE
+    mape = np.mean(errors / denominator) * 100
+    return mape
 
-    # Evaluate the model performance for model
-    mse_model = mean_squared_error(y, all_predictions_model)
-    print('Mean squared error for model:', mse_model)
+    # Calculate MAE, MAPE, and MSE
+    mae = mean_absolute_error(y_true, y_pred)
+    mape = calculate_mape(y_true, y_pred)
+    mse = mean_squared_error(y_true, y_pred)
 
-    # Note: XGBoost also provides feature importances similar to Random Forest
-    importances_best_model = best_model.feature_importances_
-    importances_model = model.feature_importances_
-
-    sorted_indices_best_model = np.argsort(importances_best_model)[::-1]
-    sorted_indices_model = np.argsort(importances_model)[::-1]
+    print('Mean Absolute Error (MAE):', mae)
+    print('Mean Absolute Percentage Error (MAPE):', mape)
+    print('Mean Squared Error (MSE):', mse)
 
 
     
@@ -195,8 +173,8 @@ if st.session_state.button_pressed:
         if jumlah_beban =="0" :
                 
                 # Print MAPE and else
-                st.subheader(f"Mean squared error is {mse_best_model}  " )
-                st.subheader(f"Mean Absolute Percentage Error is {mape_best_model}")
+                st.subheader(f"Mean squared error is {mse}  " )
+                st.subheader(f"Mean Absolute Percentage Error is {mape}")
                 # Create a download link
                 # Get the values from the 'groups' column
                 # Load the specific sheet
@@ -220,17 +198,6 @@ if st.session_state.button_pressed:
 
                 # Display the link
                 st.markdown(create_download_link(predictions_dg), unsafe_allow_html=True)
-                
-                # Plotting feature importances
-                imp, ax = plt.subplots(figsize=(10, 6))
-                ax.bar(range(len(importances_best_model)), importances_best_model[sorted_indices_best_model], align='center')
-                ax.set_xticks(range(len(importances_best_model)))
-                ax.set_xticklabels(np.array(features)[sorted_indices_best_model])
-                ax.set_title("Feature Importances")
-                ax.set_ylabel('Importance')
-                ax.set_xlabel('Features')
-
-                st.pyplot(imp)  # Pass the figure object to st.pyplot()
             
         else:
                 halfBreadth = Breadth/2
