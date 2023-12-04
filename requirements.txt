@@ -1,0 +1,9 @@
+google
+gspread
+pandas
+matplotlib
+openpyxl
+pip == 23.0
+scikit-learn==1.1.2
+py ==1.11.0
+xgboost
