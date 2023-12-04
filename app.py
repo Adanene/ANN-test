@@ -21,6 +21,8 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
 
 # Define a dictionary to store the session state values
 if 'button_pressed' not in st.session_state:
