@@ -161,7 +161,7 @@ if ok:
         return mape
     
     y_true = data[target]
-    y_column_name = all_predictions
+    y_column_name = data[all_predictions]
     y_pred = data[y_column_name]
     
     # Calculate MAE, MAPE, and MSE
