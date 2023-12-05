@@ -193,7 +193,7 @@ if st.session_state.button_pressed:
                 dg = pd.DataFrame(datap)
                 predictions_dg = pd.DataFrame({'Group' : groups, 'Actual':y_true, 'Predicted':y_pred})
                 predictions_dg.to_csv( index=False, sep='|')
-                st.success("Predictions saved to predictions.csv")
+                st.success("ANN Predictions.csv")
                 
                 def create_download_link(dg, filename="predictions.csv"):
                     csv_content = dg.to_csv(index=False, sep='|')  # Assuming '|' as separator
