@@ -160,8 +160,8 @@ if ok:
         mape = np.mean(errors / denominator) * 100
         return mape
     
-    y_true = data[target]
-    y_pred = all_predictions
+    y_true = data[target].values.ravel()
+    y_pred = all_predictions.values.ravel()
     
     # Calculate MAE, MAPE, and MSE
     mae = mean_absolute_error(y_true, y_pred)
