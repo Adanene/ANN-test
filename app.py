@@ -137,13 +137,13 @@ if ok:
     X_test = scaler.transform(X_test)
 
     model = Sequential()
-    model.add(Dense(96, input_dim=len(features), activation='relu'))
+    model.add(Dense(64, input_dim=len(features), activation='relu'))
     model.add(Dense(32, activation='relu'))
     model.add(Dense(1, activation='linear'))  # Output layer for regression
 
     # Compile the model
     model.compile(optimizer='adam', loss='mean_squared_error')
-    model.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_test, y_test))
+    model.fit(X_train, y_train, epochs=100, batch_size=64, validation_data=(X_test, y_test))
     # Now, all_predictions_best_model and all_predictions_model contain the predictions for all data points in your dataset
     all_predictions = model.predict(X)
 
