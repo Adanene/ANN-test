@@ -189,9 +189,9 @@ if st.session_state.button_pressed:
                 groups = worksheet['groups'].tolist()
 
                 # Create a DataFrame
-                datap = {'Actual': y, 'Predicted': all_predictions_model}
+                datap = {'Actual': y_true, 'Predicted': y_pred}
                 dg = pd.DataFrame(datap)
-                predictions_dg = pd.DataFrame({'Group' : groups, 'Actual':y, 'Predicted':all_predictions_model})
+                predictions_dg = pd.DataFrame({'Group' : groups, 'Actual':y_true, 'Predicted':y_pred})
                 predictions_dg.to_csv( index=False, sep='|')
                 st.success("Predictions saved to predictions.csv")
                 
