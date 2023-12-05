@@ -161,7 +161,8 @@ if ok:
         return mape
     
     y_true = data[target]
-    y_pred = data[all_predictions]
+    y_column_name = 'all_predictions'
+    y_pred = data[y_column_name]
     
     # Calculate MAE, MAPE, and MSE
     mae = mean_absolute_error(y_true, y_pred)
