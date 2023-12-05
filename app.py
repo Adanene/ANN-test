@@ -143,7 +143,7 @@ if ok:
 
     # Compile the model
     model.compile(optimizer='adam', loss='mean_squared_error')
-    model.fit(X_train, y_train, epochs=300, batch_size=64, validation_data=(X_test, y_test))
+    model.fit(X_train, y_train, epochs=275, batch_size=64, validation_data=(X_test, y_test))
     # Now, all_predictions_best_model and all_predictions_model contain the predictions for all data points in your dataset
     all_predictions = model.predict(X)
 
