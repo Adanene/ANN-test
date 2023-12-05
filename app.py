@@ -139,7 +139,7 @@ if ok:
     model = Sequential()
     model.add(Dense(64, input_dim=len(features), activation='relu'))
     model.add(Dense(32, activation='relu'))
-    model.add(Dense(1, activation='linear'))  # Output layer for regression
+    model.add(Dense(16, activation='linear'))  # Output layer for regression
 
     # Compile the model
     model.compile(optimizer='adam', loss='mean_squared_error')
