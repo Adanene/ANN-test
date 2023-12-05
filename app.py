@@ -161,7 +161,7 @@ if ok:
         return mape
     
     y_true = data[target].to_numpy().ravel()
-    y_pred = all_predictions.values.ravel()
+    y_pred = all_predictions.to_numpy().ravel()
     
     # Calculate MAE, MAPE, and MSE
     mae = mean_absolute_error(y_true, y_pred)
