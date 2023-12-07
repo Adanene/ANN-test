@@ -120,8 +120,7 @@ if ok:
 
         return mape_str
         
-    def prelu(x, alpha=0.01):
-        return np.where(x > 0, x, alpha * x)
+
     #start machine learning process
     # chnge some data into numeric
     
@@ -143,7 +142,7 @@ if ok:
 
     model = Sequential()
     model.add(Dense(64, input_dim=len(features), activation='relu'))
-    model.add(Dense(32, activation='prelu'))
+    model.add(Dense(32, activation='leaky_relu'))
     model.add(Dense(1, activation='linear'))  # Output layer for regression
 
     # Compile the model
