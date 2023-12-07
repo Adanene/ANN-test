@@ -119,6 +119,9 @@ if ok:
         mape_str = f"{mape:.2f}"
 
         return mape_str
+        
+    def prelu(x, alpha=0.01):
+        return np.where(x > 0, x, alpha * x)
     #start machine learning process
     # chnge some data into numeric
     
