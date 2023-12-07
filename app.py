@@ -138,7 +138,7 @@ if ok:
 
     model = Sequential()
     model.add(Dense(64, input_dim=len(features), activation='relu'))
-    model.add(Dense(32, activation='prelu'))
+    model.add(Dense(32, activation='softmax'))
     model.add(Dense(1, activation='linear'))  # Output layer for regression
 
     # Compile the model
