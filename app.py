@@ -11,6 +11,7 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 import xgboost as xgb
+import tensorflow as tf
 from sklearn.ensemble import AdaBoostRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
@@ -121,10 +122,14 @@ if ok:
         return mape_str
         
 
-    #start machine learning process
+    #start machine learning proces
     # chnge some data into numeric
     
 
+    # set random seed
+    np.random.seed(42)
+    tf.random.set_seed(42)    
+    
     #Select the features and target variable
     features = ['beban/disp', 'Cb' , 'cogm', 'B/T',]
     target = 'Inclinement'
