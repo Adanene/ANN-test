@@ -167,6 +167,7 @@ if ok:
             # Predict data from datasheet
             new_test = worksheet[features]
             predicted_inclination = model.predict(new_test)
+            predicted_inclination = predicted_inclination.flatten()
 
             # Calculate MAPE and MSE on datasheet
             mape_datasheet = calculate_mape(y, predicted_inclination)
