@@ -177,20 +177,6 @@ if ok:
             st.subheader(f"Mean Squared Error for predicting datasheet is {mse_datasheet}")
             st.subheader(f"Mean Absolute Percentage Error for predicting datasheet is {mape_datasheet}")
 
-            # Plotting feature importances
-            importances_model = model.feature_importances_
-            sorted_indices_model = np.argsort(importances_model)
-
-            imp, ax = plt.subplots(figsize=(10, 6))
-            ax.bar(range(len(importances_model)), importances_model[sorted_indices_model], align='center')
-            ax.set_xticks(range(len(importances_model)))
-            ax.set_xticklabels(np.array(features)[sorted_indices_model])
-            ax.set_title("Feature Importances")
-            ax.set_ylabel('Importance')
-            ax.set_xlabel('Features')
-
-            st.pyplot(imp)  # Pass the figure object to st.pyplot()
-
             # Plotting Actual vs predicted value
             fig, ax = plt.subplots()
             scatter = ax.scatter(predictions_df['Actual'], predictions_df['Predicted'], color='blue', label='Inclining result')
