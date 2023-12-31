@@ -123,7 +123,9 @@ if ok:
     # Split the dataset into features (X) and target variable (y)
     X = data[features]
     y = data[target]
-    
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
      # Build and train the model
     model = Sequential()
     model.add(Dense(64, input_dim=len(features), activation='relu'))
