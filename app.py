@@ -143,6 +143,8 @@ if ok:
 
     # Predictions on the entire dataset
     all_predictions = model.predict(X)
+    # Ensure all_predictions is a 1D array
+    all_predictions = all_predictions.flatten()
 
     # Calculate MAE, MAPE, and MSE
     mae = mean_absolute_error(y, all_predictions)
