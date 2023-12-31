@@ -141,12 +141,12 @@ if ok:
 
     model.fit(X_train, y_train, epochs=250, batch_size=64, validation_data=(X_test, y_test))
 
-    # Build and train the Linear Regression model using original scale data
-    linear_model = LinearRegression()
-    linear_model.fit(X, y)
+    # Build and train the Decision Tree model
+    tree_model = DecisionTreeRegressor()
+    tree_model.fit(X_train, y_train)
 
     # Predictions on the entire dataset
-    all_predictions_linear = linear_model.predict(X)
+    all_predictions_tree = tree_model.predict(X)
     # Predictions on the entire dataset
     all_predictions = model.predict(X)
     # Ensure all_predictions is a 1D array
