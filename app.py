@@ -160,7 +160,7 @@ if ok:
         if jumlah_beban == "0":
 
             # Load the specific sheet
-            xls = pd.ExcelFile("your_file.xlsx")  # Replace with your file path
+            xls = pd.ExcelFile(f"https://docs.google.com/spreadsheets/d/e/2PACX-1vSzJ2McdS3aIboBFt0MaFuwPxONxqOOr6wr3BPDoftmdAA7NR-nfqwdBNRzB8jpvmeBt5tfdJZzj4WU/pub?output=xlsx")  # Replace with your file path
             worksheet_name = 'Usesheet'
             worksheet = xls.parse(sheet_name=worksheet_name)
 
