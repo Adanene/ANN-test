@@ -123,6 +123,7 @@ if ok:
     # Split the dataset into features (X) and target variable (y)
     X = data[features]
     y = data[target]
+    model.fit(X_train, y_train, epochs=250, batch_size=64, validation_data=(X_test, y_test))
 
     # Build and train the Linear Regression model
     linear_model = LinearRegression()
