@@ -119,10 +119,17 @@ if ok:
     # Select features and target variable
     features = ['beban/disp', 'Cb', 'cogm', 'B/T']
     target = 'Inclinement'
-
+    
     # Split the dataset into features (X) and target variable (y)
     X = data[features]
     y = data[target]
+    
+     # Build and train the model
+    model = Sequential()
+    model.add(Dense(64, input_dim=len(features), activation='relu'))
+    model.add(Dense(32, activation='relu'))
+    model.add(Dense(1, activation='linear'))  # Output layer for regression
+
     model.fit(X_train, y_train, epochs=250, batch_size=64, validation_data=(X_test, y_test))
 
     # Build and train the Linear Regression model
