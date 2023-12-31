@@ -177,14 +177,6 @@ if ok:
             st.subheader(f"Mean Squared Error for predicting datasheet is {mse_datasheet}")
             st.subheader(f"Mean Absolute Percentage Error for predicting datasheet is {mape_datasheet}")
 
-            # Prepare the .csv files
-            predictions_df = pd.DataFrame({'Actual': y, 'Predicted': predicted_inclination})
-            predictions_df.to_csv("predictions.csv", index=False, sep='|')
-            st.success("Predictions saved to predictions.csv")
-
-            # Creating the CSV download link
-            st.markdown(create_csv_download_link(predictions_df), unsafe_allow_html=True)
-
             # Plotting feature importances
             importances_model = model.feature_importances_
             sorted_indices_model = np.argsort(importances_model)
