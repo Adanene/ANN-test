@@ -136,7 +136,9 @@ if ok:
     model.add(Dense(64, input_dim=len(features), activation='relu'))
     model.add(Dense(32, activation='relu'))
     model.add(Dense(1, activation='linear'))  # Output layer for regression
-    
+    # Compile the model
+    model.compile(optimizer='adam', loss='mean_squared_error')
+
     model.fit(X_train, y_train, epochs=250, batch_size=64, validation_data=(X_test, y_test))
 
     # Build and train the Linear Regression model using original scale data
