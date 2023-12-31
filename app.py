@@ -123,20 +123,25 @@ if ok:
     # Split the dataset into features (X) and target variable (y)
     X = data[features]
     y = data[target]
+
+    # Standardize your data (important for neural networks)
     scaler = StandardScaler()
-    X_train = scaler.fit_transform(X_train)
-    X_test = scaler.transform(X_test)
-     # Build and train the model
+    X_scaled = scaler.fit_transform(X)
+
+    # Split the dataset into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.3, random_state=42)
+
+    # Build and train the model
     model = Sequential()
     model.add(Dense(64, input_dim=len(features), activation='relu'))
     model.add(Dense(32, activation='relu'))
     model.add(Dense(1, activation='linear'))  # Output layer for regression
-
+    
     model.fit(X_train, y_train, epochs=250, batch_size=64, validation_data=(X_test, y_test))
 
-    # Build and train the Linear Regression model
+    # Build and train the Linear Regression model using original scale data
     linear_model = LinearRegression()
-    linear_model.fit(X_train, y_train)
+    linear_model.fit(X, y)
 
     # Predictions on the entire dataset
     all_predictions_linear = linear_model.predict(X)
