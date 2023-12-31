@@ -186,32 +186,106 @@ if ok:
 if st.session_state.button_pressed:
         if jumlah_beban =="0" :
                 
-                # Print MAPE and else
-                st.subheader(f"Mean squared error is {mse}  " )
-                st.subheader(f"Mean Absolute Percentage Error is {mape}")
+
                 # Create a download link
                 # Get the values from the 'groups' column
                 # Load the specific sheet
                 xls = pd.ExcelFile(f"https://docs.google.com/spreadsheets/d/e/2PACX-1vSzJ2McdS3aIboBFt0MaFuwPxONxqOOr6wr3BPDoftmdAA7NR-nfqwdBNRzB8jpvmeBt5tfdJZzj4WU/pub?output=xlsx")
                 worksheet_name = 'Usesheet'  # Replace with the actual name of your sheet
                 worksheet = xls.parse(sheet_name=worksheet_name)
+
                 groups = worksheet['groups'].tolist()
 
-                # Create a DataFrame
-                datap = {'Actual': y_true, 'Predicted': y_pred}
+               # Predict data from datasheet
+                new_test0 = worksheet[['beban/disp', 'Cb', 'cogm', 'B/T',]]
+                predicted_Incline0 = best_model.predict(new_test0) ### the one that will learn and predict the data
+                datap = {'Actual': y, 'Predicted': predicted_Incline0}
+             # Calculate mape and MSE on datasheet
+                # MAPE and MSE Prediction for model
+                mape_datap = calculate_mape(y, predicted_Incline0)
+                mse_datap = mean_squared_error(y, predicted_Incline0)
+            # print the MAPE and MSE
+                st.subheader(f"Mean squared error for predicting datasheet is {mse_datap}  " )
+                st.subheader(f"Mean Absolute Percentage Error for predicting datasheet is {mape_datap}")
+             # Preapare the .csv files
                 dg = pd.DataFrame(datap)
-                predictions_dg = pd.DataFrame({'Group' : groups, 'Actual':y_true, 'Predicted':y_pred})
+                predictions_dg = pd.DataFrame({'Group' : groups, 'Actual':y, 'Predicted':predicted_Incline0})
                 predictions_dg.to_csv( index=False, sep='|')
-                st.success("ANN Predictions.csv")
+                st.success("Predictions saved to predictions.csv")
                 
-                def create_download_link(dg, filename="predictions.csv"):
+                # Creating the CSV download link
+                def create_csv_download_link(dg, filename="predictions.csv"):
                     csv_content = dg.to_csv(index=False, sep='|')  # Assuming '|' as separator
                     b64 = base64.b64encode(csv_content.encode()).decode()  # Encoding the CSV file
                     href = f'<a href="data:file/csv;base64,{b64}" download="{filename}">Download CSV</a>'
                     return href
 
-                # Display the link
-                st.markdown(create_download_link(predictions_dg), unsafe_allow_html=True)
+                # Creating the .pkl download link
+                def create_model_download_link(model_file_path='your_model.pkl', filename="your_model.pkl"):
+                    with open(model_file_path, 'rb') as f:
+                        pkl_content = f.read()
+                        b64 = base64.b64encode(pkl_content).decode()
+                        href = f'<a href="data:file/pkl;base64,{b64}" download="{filename}">Download Model</a>'
+                    return href
+
+                # Display the links
+                st.markdown(create_csv_download_link(predictions_dg), unsafe_allow_html=True)
+                
+                st.markdown(create_model_download_link('your_model.pkl'), unsafe_allow_html=True)
+                
+                # Plotting feature importances
+                imp, ax = plt.subplots(figsize=(10, 6))
+                ax.bar(range(len(importances_best_model)), importances_best_model[sorted_indices_best_model], align='center')
+                ax.set_xticks(range(len(importances_best_model)))
+                ax.set_xticklabels(np.array(features)[sorted_indices_best_model])
+                ax.set_title("Feature Importances")
+                ax.set_ylabel('Importance')
+                ax.set_xlabel('Features')
+
+                st.pyplot(imp)  # Pass the figure object to st.pyplot()
+
+                # Plotting Actual vs predicted value
+                # make graphics
+                fig, ax = plt.subplots()
+                # Create a scatter plot
+                scatter = ax.scatter(datap['Actual'], datap['Predicted'] , color='blue', label='Incliing result')
+        
+                # Set title, labels, and legend
+                ax.set_title("Actual vs Predicted")
+                ax.set_xlabel('Actual data')
+                ax.set_ylabel('Prediction data')
+                ax.legend()
+
+                # Add annotations
+                for i in range(len(datap)):
+                                actual_value = pd.to_numeric(datap['Actual'].iloc[i], errors='coerce')
+                                # Check if 'Predicted' is a DataFrame or NumPy array
+                                if isinstance(datap['Predicted'], pd.DataFrame):
+                                    predicted_value = pd.to_numeric(datap['Predicted'].iloc[i, 0], errors='coerce')
+                                else:
+                                    predicted_value = pd.to_numeric(datap['Predicted'][i], errors='coerce')
+                    
+                ax.annotate(i, (actual_value, predicted_value))
+                ax.set_xlabel('Actual)')
+                ax.set_ylabel('Predicted')
+                  # Pass the figure object to st.pyplot()
+                st.pyplot(fig)
+
+                # make the histogram datasheet
+                predicted_degrees = datap['Predicted']
+                # Create a histogram with 1-degree bins
+                freq, bins, _ = plt.hist(predicted_degrees, bins=np.arange(min(predicted_degrees), max(predicted_degrees) + 1, 1), edgecolor='black')
+
+                # Set title and labels
+                plt.title('Frequency Histogram of Predicted Inclining Angles')
+                plt.xlabel('Inclining Angle (degrees)')
+                plt.ylabel('Frequency')
+
+                # Show the plot
+                st.pyplot(plt.gcf())
+
+                # Clear the current figure
+                plt.clf()
             
         else:
                 halfBreadth = Breadth/2
