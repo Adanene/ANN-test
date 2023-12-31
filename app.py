@@ -153,7 +153,7 @@ if ok:
     # Compile the model
     model.compile(optimizer='adam', loss='mean_squared_error')
     model.fit(X_train, y_train, epochs=250, batch_size=64, validation_data=(X_test, y_test))
-    # Now, all_predictions_best_model and all_predictions_model contain the predictions for all data points in your dataset
+    # Now, all_predictions_model and all_predictions_model contain the predictions for all data points in your dataset
     all_predictions = model.predict(X)
 
 
@@ -186,7 +186,6 @@ if ok:
 if st.session_state.button_pressed:
         if jumlah_beban =="0" :
                 
-
                 # Create a download link
                 # Get the values from the 'groups' column
                 # Load the specific sheet
@@ -198,7 +197,7 @@ if st.session_state.button_pressed:
 
                # Predict data from datasheet
                 new_test0 = worksheet[['beban/disp', 'Cb', 'cogm', 'B/T',]]
-                predicted_Incline0 = best_model.predict(new_test0) ### the one that will learn and predict the data
+                predicted_Incline0 = model.predict(new_test0) ### the one that will learn and predict the data
                 datap = {'Actual': y, 'Predicted': predicted_Incline0}
              # Calculate mape and MSE on datasheet
                 # MAPE and MSE Prediction for model
@@ -235,9 +234,108 @@ if st.session_state.button_pressed:
                 
                 # Plotting feature importances
                 imp, ax = plt.subplots(figsize=(10, 6))
-                ax.bar(range(len(importances_best_model)), importances_best_model[sorted_indices_best_model], align='center')
-                ax.set_xticks(range(len(importances_best_model)))
-                ax.set_xticklabels(np.array(features)[sorted_indices_best_model])
+                ax.bar(range(len(importances_model)), importances_model[sorted_indices_model], align='center')
+                ax.set_xticks(range(len(importances_model)))
+                ax.set_xticklabels(np.array(features)[sorted_indices_model])
+                ax.set_title("Feature Importances")
+                ax.set_ylabel('Importance')
+                ax.set_xlabel('Features')
+
+                st.pyplot(imp)  # Pass the figure object to st.pyplot()
+
+                # Plotting Actual vs predicted value
+                # make graphics
+                fig, ax = plt.subplots()
+                # Create a scatter plot
+                scatter = ax.scatter(datap['Actual'], datap['Predicted'] , color='blue', label='Incliing result')
+        
+                # Set title, labels, and legend
+                ax.set_title("Actual vs Predicted")
+                ax.set_xlabel('Actual data')
+                ax.set_ylabel('Prediction data')
+                ax.legend()
+
+                # Add annotations
+                for i in range(len(datap)):
+                                actual_value = pd.to_numeric(datap['Actual'].iloc[i], errors='coerce')
+                                # Check if 'Predicted' is a DataFrame or NumPy array
+                                if isinstance(datap['Predicted'], pd.DataFrame):
+                                    predicted_value = pd.to_numeric(datap['Predicted'].iloc[i, 0], errors='coerce')
+                                else:
+                                    predicted_value = pd.to_numeric(datap['Predicted'][i], errors='coerce')
+                    
+                ax.annotate(i, (actual_value, predicted_value))
+                ax.set_xlabel('Actual)')
+                ax.set_ylabel('Predicted')
+                  # Pass the figure object to st.pyplot()
+                st.pyplot(fig)
+
+                # make the histogram datasheet
+                predicted_degrees = datap['Predicted']
+                # Create a histogram with 1-degree bins
+                freq, bins, _ = plt.hist(predicted_degrees, bins=np.arange(min(predicted_degrees), max(predicted_degrees) + 1, 1), edgecolor='black')
+
+                # Set title and labels
+                plt.title('Frequency Histogram of Predicted Inclining Angles')
+                plt.xlabel('Inclining Angle (degrees)')
+                plt.ylabel('Frequency')
+
+                # Show the plot
+                st.pyplot(plt.gcf())
+
+                # Clear the current figure
+                plt.clf()
+                # Create a download link
+                # Get the values from the 'groups' column
+                # Load the specific sheet
+                xls = pd.ExcelFile(f"https://docs.google.com/spreadsheets/d/e/2PACX-1vSzJ2McdS3aIboBFt0MaFuwPxONxqOOr6wr3BPDoftmdAA7NR-nfqwdBNRzB8jpvmeBt5tfdJZzj4WU/pub?output=xlsx")
+                worksheet_name = 'Usesheet'  # Replace with the actual name of your sheet
+                worksheet = xls.parse(sheet_name=worksheet_name)
+
+                groups = worksheet['groups'].tolist()
+
+               # Predict data from datasheet
+                new_test0 = worksheet[['beban/disp', 'Cb', 'cogm', 'B/T',]]
+                predicted_Incline0 = model.predict(new_test0) ### the one that will learn and predict the data
+                datap = {'Actual': y, 'Predicted': predicted_Incline0}
+             # Calculate mape and MSE on datasheet
+                # MAPE and MSE Prediction for model
+                mape_datap = calculate_mape(y, predicted_Incline0)
+                mse_datap = mean_squared_error(y, predicted_Incline0)
+            # print the MAPE and MSE
+                st.subheader(f"Mean squared error for predicting datasheet is {mse_datap}  " )
+                st.subheader(f"Mean Absolute Percentage Error for predicting datasheet is {mape_datap}")
+             # Preapare the .csv files
+                dg = pd.DataFrame(datap)
+                predictions_dg = pd.DataFrame({'Group' : groups, 'Actual':y, 'Predicted':predicted_Incline0})
+                predictions_dg.to_csv( index=False, sep='|')
+                st.success("Predictions saved to predictions.csv")
+                
+                # Creating the CSV download link
+                def create_csv_download_link(dg, filename="predictions.csv"):
+                    csv_content = dg.to_csv(index=False, sep='|')  # Assuming '|' as separator
+                    b64 = base64.b64encode(csv_content.encode()).decode()  # Encoding the CSV file
+                    href = f'<a href="data:file/csv;base64,{b64}" download="{filename}">Download CSV</a>'
+                    return href
+
+                # Creating the .pkl download link
+                def create_model_download_link(model_file_path='your_model.pkl', filename="your_model.pkl"):
+                    with open(model_file_path, 'rb') as f:
+                        pkl_content = f.read()
+                        b64 = base64.b64encode(pkl_content).decode()
+                        href = f'<a href="data:file/pkl;base64,{b64}" download="{filename}">Download Model</a>'
+                    return href
+
+                # Display the links
+                st.markdown(create_csv_download_link(predictions_dg), unsafe_allow_html=True)
+                
+                st.markdown(create_model_download_link('your_model.pkl'), unsafe_allow_html=True)
+                
+                # Plotting feature importances
+                imp, ax = plt.subplots(figsize=(10, 6))
+                ax.bar(range(len(importances_model)), importances_model[sorted_indices_model], align='center')
+                ax.set_xticks(range(len(importances_model)))
+                ax.set_xticklabels(np.array(features)[sorted_indices_model])
                 ax.set_title("Feature Importances")
                 ax.set_ylabel('Importance')
                 ax.set_xlabel('Features')
@@ -388,31 +486,31 @@ if st.session_state.button_pressed:
 
                 
                 new_test1 = pd.DataFrame({'Moment': [Mselisih1], 'displacement': [displacement],'B/T' :[BT] , 'Cb': [Cb], })
-                predicted_Incline1 = best_model.predict(new_test1)
+                predicted_Incline1 = model.predict(new_test1)
         
                 new_test2 = pd.DataFrame({'Moment': [Mselisih2], 'displacement': [displacement],'B/T' :[BT], 'Cb': [Cb], })
-                predicted_Incline2 = best_model.predict(new_test2)
+                predicted_Incline2 = model.predict(new_test2)
         
                 new_test3 = pd.DataFrame({'Moment': [Mselisih3], 'displacement': [displacement],'B/T' :[BT], 'Cb': [Cb],})
-                predicted_Incline3 = best_model.predict(new_test3)
+                predicted_Incline3 = model.predict(new_test3)
         
                 new_test4 = pd.DataFrame({'Moment': [Mselisih4], 'displacement': [displacement],'B/T' :[BT], 'Cb': [Cb], })
-                predicted_Incline4 = best_model.predict(new_test4)
+                predicted_Incline4 = model.predict(new_test4)
         
                 new_test5 = pd.DataFrame({ 'Moment': [Mselisih5], 'displacement': [displacement],'B/T' :[BT], 'Cb': [Cb], })
-                predicted_Incline5 = best_model.predict(new_test5)
+                predicted_Incline5 = model.predict(new_test5)
         
                 new_test6 = pd.DataFrame({'Moment': [Mselisih6], 'displacement': [displacement],'B/T' :[BT], 'Cb': [Cb],})
-                predicted_Incline6 = best_model.predict(new_test6)
+                predicted_Incline6 = model.predict(new_test6)
         
                 new_test7 = pd.DataFrame({'Moment': [Mselisih7], 'displacement': [displacement],'B/T' :[BT], 'Cb': [Cb],})
-                predicted_Incline7 = best_model.predict(new_test7)
+                predicted_Incline7 = model.predict(new_test7)
         
                 new_test8 = pd.DataFrame({'Moment': [Mselisih8], 'displacement': [displacement],'B/T' :[BT], 'Cb': [Cb],})
-                predicted_Incline8 = best_model.predict(new_test8)
+                predicted_Incline8 = model.predict(new_test8)
 
                 new_test9 = pd.DataFrame({'Moment': [Mselisih9], 'displacement': [displacement],'B/T' :[BT], 'Cb': [Cb],})
-                predicted_Incline9 = best_model.predict(new_test9)
+                predicted_Incline9 = model.predict(new_test9)
 
                 ##Convert into rad and tan θ
                 radians1 = math.radians(predicted_Incline1[0])
@@ -435,7 +533,7 @@ if st.session_state.button_pressed:
                 tantheta8 = math.tan(radians8)
                 tantheta9 = math.tan(radians9)
                 
-                st.subheader(f"Mean squared error is {mse_best_model}  " )
+                st.subheader(f"Mean squared error is {mse_model}  " )
                 st.subheader(f"Mean Absolute Percentage Error is {mape_model}")
             
                 dataS = pd.DataFrame({
