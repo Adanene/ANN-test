@@ -124,23 +124,12 @@ if ok:
     X = data[features]
     y = data[target]
 
-    # Split the dataset into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+    # Build and train the Linear Regression model
+    linear_model = LinearRegression()
+    linear_model.fit(X_train, y_train)
 
-    # Standardize the data
-    scaler = StandardScaler()
-    X_train = scaler.fit_transform(X_train)
-    X_test = scaler.transform(X_test)
-
-    # Build and train the model
-    model = Sequential()
-    model.add(Dense(64, input_dim=len(features), activation='relu'))
-    model.add(Dense(32, activation='relu'))
-    model.add(Dense(1, activation='linear'))  # Output layer for regression
-
-    model.compile(optimizer='adam', loss='mean_squared_error')
-    model.fit(X_train, y_train, epochs=250, batch_size=64, validation_data=(X_test, y_test))
-
+    # Predictions on the entire dataset
+    all_predictions_linear = linear_model.predict(X)
     # Predictions on the entire dataset
     all_predictions = model.predict(X)
     # Ensure all_predictions is a 1D array
