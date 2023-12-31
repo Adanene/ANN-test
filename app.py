@@ -104,286 +104,126 @@ ok = st.button("Calculate Incline")
 if ok:
     st.session_state.button_pressed = True
 
-    #start machine learning process
-    #Define mape
-    def calculate_mape(actual, predicted):
-        errors = np.abs(actual - predicted)
-        denominator = np.abs(actual)
-    
-        # Handle cases where denominator is zero
-        denominator[denominator == 0] = 0.01  # Convert zeros to other value to avoid division by zero
+    # Function to calculate MAPE
+    def calculate_mape(y_true, y_pred):
+        errors = np.abs(y_true - y_pred)
+        denominator = np.abs(y_true)
+        denominator[denominator == 0] = 0.01  # Convert zeros to a small number to avoid division by zero
+        mape = np.mean(errors / denominator) * 100
+        return mape
 
-        # Calculate MAPE
-        mape = np.nanmean(errors / denominator) * 100
-
-        # Convert mape to a string
-        mape_str = f"{mape:.2f}"
-
-        return mape_str
-        
-
-    #start machine learning proces
-    # chnge some data into numeric
-    
-
-    # set random seed
+    # Set random seed
     np.random.seed(42)
-    tf.random.set_seed(42)    
-    
-    #Select the features and target variable
-    features = ['beban/disp', 'Cb' , 'cogm', 'B/T',]
+    tf.random.set_seed(42)
+
+    # Select features and target variable
+    features = ['beban/disp', 'Cb', 'cogm', 'B/T']
     target = 'Inclinement'
 
     # Split the dataset into features (X) and target variable (y)
     X = data[features]
     y = data[target]
+
     # Split the dataset into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-    # Standardize your data (important for neural networks)
+    # Standardize the data
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
+    # Build and train the model
     model = Sequential()
-    model.add(Dense(64, input_dim=len(features), activation='leaky_relu'))
+    model.add(Dense(64, input_dim=len(features), activation='relu'))
     model.add(Dense(32, activation='relu'))
     model.add(Dense(1, activation='linear'))  # Output layer for regression
 
-    # Compile the model
     model.compile(optimizer='adam', loss='mean_squared_error')
     model.fit(X_train, y_train, epochs=250, batch_size=64, validation_data=(X_test, y_test))
-    # Now, all_predictions_model and all_predictions_model contain the predictions for all data points in your dataset
+
+    # Predictions on the entire dataset
     all_predictions = model.predict(X)
 
-
-    # Calculate MAPE
-    def calculate_mape(y_true, y_pred):
-        errors = np.abs(y_true - y_pred)
-        denominator = np.abs(y_true)
-
-        # Handle cases where denominator is zero
-        denominator[denominator == 0] = 0.01  # Convert zeros to a small number to avoid division by zero
-
-        # Calculate MAPE
-        mape = np.mean(errors / denominator) * 100
-        return mape
-    
-    y_true = data[target].to_numpy().ravel()
-    y_pred = all_predictions.ravel()
-    
     # Calculate MAE, MAPE, and MSE
-    mae = mean_absolute_error(y_true, y_pred)
-    mape = calculate_mape(y_true, y_pred)
-    mse = mean_squared_error(y_true, y_pred)
+    mae = mean_absolute_error(y, all_predictions)
+    mape = calculate_mape(y, all_predictions)
+    mse = mean_squared_error(y, all_predictions)
 
     print('Mean Absolute Error (MAE):', mae)
     print('Mean Absolute Percentage Error (MAPE):', mape)
     print('Mean Squared Error (MSE):', mse)
 
+    # Check if the button is pressed
+    if st.session_state.button_pressed:
+        if jumlah_beban == "0":
 
-    
-if st.session_state.button_pressed:
-        if jumlah_beban =="0" :
-                
-                # Create a download link
-                # Get the values from the 'groups' column
-                # Load the specific sheet
-                xls = pd.ExcelFile(f"https://docs.google.com/spreadsheets/d/e/2PACX-1vSzJ2McdS3aIboBFt0MaFuwPxONxqOOr6wr3BPDoftmdAA7NR-nfqwdBNRzB8jpvmeBt5tfdJZzj4WU/pub?output=xlsx")
-                worksheet_name = 'Usesheet'  # Replace with the actual name of your sheet
-                worksheet = xls.parse(sheet_name=worksheet_name)
+            # Load the specific sheet
+            xls = pd.ExcelFile("your_file.xlsx")  # Replace with your file path
+            worksheet_name = 'Usesheet'
+            worksheet = xls.parse(sheet_name=worksheet_name)
 
-                groups = worksheet['groups'].tolist()
+            # Predict data from datasheet
+            new_test = worksheet[features]
+            predicted_inclination = model.predict(new_test)
 
-               # Predict data from datasheet
-                new_test0 = worksheet[['beban/disp', 'Cb', 'cogm', 'B/T',]]
-                predicted_Incline0 = model.predict(new_test0) ### the one that will learn and predict the data
-                datap = {'Actual': y, 'Predicted': predicted_Incline0}
-             # Calculate mape and MSE on datasheet
-                # MAPE and MSE Prediction for model
-                mape_datap = calculate_mape(y, predicted_Incline0)
-                mse_datap = mean_squared_error(y, predicted_Incline0)
-            # print the MAPE and MSE
-                st.subheader(f"Mean squared error for predicting datasheet is {mse_datap}  " )
-                st.subheader(f"Mean Absolute Percentage Error for predicting datasheet is {mape_datap}")
-             # Preapare the .csv files
-                dg = pd.DataFrame(datap)
-                predictions_dg = pd.DataFrame({'Group' : groups, 'Actual':y, 'Predicted':predicted_Incline0})
-                predictions_dg.to_csv( index=False, sep='|')
-                st.success("Predictions saved to predictions.csv")
-                
-                # Creating the CSV download link
-                def create_csv_download_link(dg, filename="predictions.csv"):
-                    csv_content = dg.to_csv(index=False, sep='|')  # Assuming '|' as separator
-                    b64 = base64.b64encode(csv_content.encode()).decode()  # Encoding the CSV file
-                    href = f'<a href="data:file/csv;base64,{b64}" download="{filename}">Download CSV</a>'
-                    return href
+            # Calculate MAPE and MSE on datasheet
+            mape_datasheet = calculate_mape(y, predicted_inclination)
+            mse_datasheet = mean_squared_error(y, predicted_inclination)
 
-                # Creating the .pkl download link
-                def create_model_download_link(model_file_path='your_model.pkl', filename="your_model.pkl"):
-                    with open(model_file_path, 'rb') as f:
-                        pkl_content = f.read()
-                        b64 = base64.b64encode(pkl_content).decode()
-                        href = f'<a href="data:file/pkl;base64,{b64}" download="{filename}">Download Model</a>'
-                    return href
+            # Print the MAPE and MSE
+            st.subheader(f"Mean Squared Error for predicting datasheet is {mse_datasheet}")
+            st.subheader(f"Mean Absolute Percentage Error for predicting datasheet is {mape_datasheet}")
 
-                # Display the links
-                st.markdown(create_csv_download_link(predictions_dg), unsafe_allow_html=True)
-                
-                st.markdown(create_model_download_link('your_model.pkl'), unsafe_allow_html=True)
-                
-                # Plotting feature importances
-                imp, ax = plt.subplots(figsize=(10, 6))
-                ax.bar(range(len(importances_model)), importances_model[sorted_indices_model], align='center')
-                ax.set_xticks(range(len(importances_model)))
-                ax.set_xticklabels(np.array(features)[sorted_indices_model])
-                ax.set_title("Feature Importances")
-                ax.set_ylabel('Importance')
-                ax.set_xlabel('Features')
+            # Prepare the .csv files
+            predictions_df = pd.DataFrame({'Actual': y, 'Predicted': predicted_inclination})
+            predictions_df.to_csv("predictions.csv", index=False, sep='|')
+            st.success("Predictions saved to predictions.csv")
 
-                st.pyplot(imp)  # Pass the figure object to st.pyplot()
+            # Creating the CSV download link
+            st.markdown(create_csv_download_link(predictions_df), unsafe_allow_html=True)
 
-                # Plotting Actual vs predicted value
-                # make graphics
-                fig, ax = plt.subplots()
-                # Create a scatter plot
-                scatter = ax.scatter(datap['Actual'], datap['Predicted'] , color='blue', label='Incliing result')
-        
-                # Set title, labels, and legend
-                ax.set_title("Actual vs Predicted")
-                ax.set_xlabel('Actual data')
-                ax.set_ylabel('Prediction data')
-                ax.legend()
+            # Plotting feature importances
+            importances_model = model.feature_importances_
+            sorted_indices_model = np.argsort(importances_model)
 
-                # Add annotations
-                for i in range(len(datap)):
-                                actual_value = pd.to_numeric(datap['Actual'].iloc[i], errors='coerce')
-                                # Check if 'Predicted' is a DataFrame or NumPy array
-                                if isinstance(datap['Predicted'], pd.DataFrame):
-                                    predicted_value = pd.to_numeric(datap['Predicted'].iloc[i, 0], errors='coerce')
-                                else:
-                                    predicted_value = pd.to_numeric(datap['Predicted'][i], errors='coerce')
-                    
+            imp, ax = plt.subplots(figsize=(10, 6))
+            ax.bar(range(len(importances_model)), importances_model[sorted_indices_model], align='center')
+            ax.set_xticks(range(len(importances_model)))
+            ax.set_xticklabels(np.array(features)[sorted_indices_model])
+            ax.set_title("Feature Importances")
+            ax.set_ylabel('Importance')
+            ax.set_xlabel('Features')
+
+            st.pyplot(imp)  # Pass the figure object to st.pyplot()
+
+            # Plotting Actual vs predicted value
+            fig, ax = plt.subplots()
+            scatter = ax.scatter(predictions_df['Actual'], predictions_df['Predicted'], color='blue', label='Inclining result')
+            ax.set_title("Actual vs Predicted")
+            ax.set_xlabel('Actual data')
+            ax.set_ylabel('Prediction data')
+            ax.legend()
+
+            # Add annotations
+            for i in range(len(predictions_df)):
+                actual_value = pd.to_numeric(predictions_df['Actual'].iloc[i], errors='coerce')
+                predicted_value = pd.to_numeric(predictions_df['Predicted'][i], errors='coerce')
                 ax.annotate(i, (actual_value, predicted_value))
-                ax.set_xlabel('Actual)')
-                ax.set_ylabel('Predicted')
-                  # Pass the figure object to st.pyplot()
-                st.pyplot(fig)
 
-                # make the histogram datasheet
-                predicted_degrees = datap['Predicted']
-                # Create a histogram with 1-degree bins
-                freq, bins, _ = plt.hist(predicted_degrees, bins=np.arange(min(predicted_degrees), max(predicted_degrees) + 1, 1), edgecolor='black')
+            st.pyplot(fig)  # Pass the figure object to st.pyplot()
 
-                # Set title and labels
-                plt.title('Frequency Histogram of Predicted Inclining Angles')
-                plt.xlabel('Inclining Angle (degrees)')
-                plt.ylabel('Frequency')
+            # Make the histogram of datasheet
+            predicted_degrees = predictions_df['Predicted']
+            freq, bins, _ = plt.hist(predicted_degrees, bins=np.arange(min(predicted_degrees), max(predicted_degrees) + 1, 1), edgecolor='black')
 
-                # Show the plot
-                st.pyplot(plt.gcf())
+            plt.title('Frequency Histogram of Predicted Inclining Angles')
+            plt.xlabel('Inclining Angle (degrees)')
+            plt.ylabel('Frequency')
 
-                # Clear the current figure
-                plt.clf()
-                # Create a download link
-                # Get the values from the 'groups' column
-                # Load the specific sheet
-                xls = pd.ExcelFile(f"https://docs.google.com/spreadsheets/d/e/2PACX-1vSzJ2McdS3aIboBFt0MaFuwPxONxqOOr6wr3BPDoftmdAA7NR-nfqwdBNRzB8jpvmeBt5tfdJZzj4WU/pub?output=xlsx")
-                worksheet_name = 'Usesheet'  # Replace with the actual name of your sheet
-                worksheet = xls.parse(sheet_name=worksheet_name)
+            st.pyplot(plt.gcf())  # Pass the figure object to st.pyplot()
 
-                groups = worksheet['groups'].tolist()
-
-               # Predict data from datasheet
-                new_test0 = worksheet[['beban/disp', 'Cb', 'cogm', 'B/T',]]
-                predicted_Incline0 = model.predict(new_test0) ### the one that will learn and predict the data
-                datap = {'Actual': y, 'Predicted': predicted_Incline0}
-             # Calculate mape and MSE on datasheet
-                # MAPE and MSE Prediction for model
-                mape_datap = calculate_mape(y, predicted_Incline0)
-                mse_datap = mean_squared_error(y, predicted_Incline0)
-            # print the MAPE and MSE
-                st.subheader(f"Mean squared error for predicting datasheet is {mse_datap}  " )
-                st.subheader(f"Mean Absolute Percentage Error for predicting datasheet is {mape_datap}")
-             # Preapare the .csv files
-                dg = pd.DataFrame(datap)
-                predictions_dg = pd.DataFrame({'Group' : groups, 'Actual':y, 'Predicted':predicted_Incline0})
-                predictions_dg.to_csv( index=False, sep='|')
-                st.success("Predictions saved to predictions.csv")
-                
-                # Creating the CSV download link
-                def create_csv_download_link(dg, filename="predictions.csv"):
-                    csv_content = dg.to_csv(index=False, sep='|')  # Assuming '|' as separator
-                    b64 = base64.b64encode(csv_content.encode()).decode()  # Encoding the CSV file
-                    href = f'<a href="data:file/csv;base64,{b64}" download="{filename}">Download CSV</a>'
-                    return href
-
-                # Creating the .pkl download link
-                def create_model_download_link(model_file_path='your_model.pkl', filename="your_model.pkl"):
-                    with open(model_file_path, 'rb') as f:
-                        pkl_content = f.read()
-                        b64 = base64.b64encode(pkl_content).decode()
-                        href = f'<a href="data:file/pkl;base64,{b64}" download="{filename}">Download Model</a>'
-                    return href
-
-                # Display the links
-                st.markdown(create_csv_download_link(predictions_dg), unsafe_allow_html=True)
-                
-                st.markdown(create_model_download_link('your_model.pkl'), unsafe_allow_html=True)
-                
-                # Plotting feature importances
-                imp, ax = plt.subplots(figsize=(10, 6))
-                ax.bar(range(len(importances_model)), importances_model[sorted_indices_model], align='center')
-                ax.set_xticks(range(len(importances_model)))
-                ax.set_xticklabels(np.array(features)[sorted_indices_model])
-                ax.set_title("Feature Importances")
-                ax.set_ylabel('Importance')
-                ax.set_xlabel('Features')
-
-                st.pyplot(imp)  # Pass the figure object to st.pyplot()
-
-                # Plotting Actual vs predicted value
-                # make graphics
-                fig, ax = plt.subplots()
-                # Create a scatter plot
-                scatter = ax.scatter(datap['Actual'], datap['Predicted'] , color='blue', label='Incliing result')
-        
-                # Set title, labels, and legend
-                ax.set_title("Actual vs Predicted")
-                ax.set_xlabel('Actual data')
-                ax.set_ylabel('Prediction data')
-                ax.legend()
-
-                # Add annotations
-                for i in range(len(datap)):
-                                actual_value = pd.to_numeric(datap['Actual'].iloc[i], errors='coerce')
-                                # Check if 'Predicted' is a DataFrame or NumPy array
-                                if isinstance(datap['Predicted'], pd.DataFrame):
-                                    predicted_value = pd.to_numeric(datap['Predicted'].iloc[i, 0], errors='coerce')
-                                else:
-                                    predicted_value = pd.to_numeric(datap['Predicted'][i], errors='coerce')
-                    
-                ax.annotate(i, (actual_value, predicted_value))
-                ax.set_xlabel('Actual)')
-                ax.set_ylabel('Predicted')
-                  # Pass the figure object to st.pyplot()
-                st.pyplot(fig)
-
-                # make the histogram datasheet
-                predicted_degrees = datap['Predicted']
-                # Create a histogram with 1-degree bins
-                freq, bins, _ = plt.hist(predicted_degrees, bins=np.arange(min(predicted_degrees), max(predicted_degrees) + 1, 1), edgecolor='black')
-
-                # Set title and labels
-                plt.title('Frequency Histogram of Predicted Inclining Angles')
-                plt.xlabel('Inclining Angle (degrees)')
-                plt.ylabel('Frequency')
-
-                # Show the plot
-                st.pyplot(plt.gcf())
-
-                # Clear the current figure
-                plt.clf()
+            # Clear the current figure
+            plt.clf()
             
         else:
                 halfBreadth = Breadth/2
